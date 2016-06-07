@@ -2,8 +2,11 @@
 
     varying vec2 cord;
     uniform int size;
+    uniform vec3 color1;
+    uniform vec3 color2;
     uniform float size2;
     uniform sampler2D uSampler;
+
 
     int mandel( void )
     {
@@ -23,6 +26,9 @@
     void main( void )
     {
        int n = mandel();
+       float nn = float(n) / float(size);
        gl_FragColor = texture2D(uSampler, vec2(float(n) / float(size), float(n) / float(size) * 3.0));
+       gl_FragColor = vec4(1, 1, 1, 1);
+       gl_FragColor = vec4(color1 * nn + color2 * (1.0 - nn), 1.0);
     }
 
