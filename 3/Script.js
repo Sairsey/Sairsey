@@ -7,7 +7,7 @@ function ThreeStart() {
     InitLight();
     InitGeometry();
     InitMaterials();
-    LoadDalek();
+    LoadDalek()
     LoadDeadPool();
     MeshAll();
     tick();
@@ -89,11 +89,13 @@ function InitCamera() {
 
 function InitLight() {
     var spotLight = new THREE.SpotLight(0xffffff);
+    spotLight.castShadow = true;
     spotLight.position.set(0, 1000, 100);
     scene.add(spotLight);
 
-    var ambient = new THREE.AmbientLight(0xffffff);
-    scene.add(ambient);
+    /**
+     var ambient = new THREE.AmbientLight(0xffffff);
+     scene.add(ambient); */
 
 }
 
@@ -126,13 +128,43 @@ var chromeMaterial;
 var glassMaterial;
 var TorusMaterial;
 
+var coeff = 0.98;
+
 function InitMaterials() {
     Sphere_material = new THREE.MeshLambertMaterial({color: 0x00ff00});
-    Plane_material = new THREE.MeshLambertMaterial({color: 0x0000ff});
+    Plane_material = new THREE.MeshLambertMaterial({color: 0xffffff});
+    Plane_material.receiveShadow = true;
 
-    chromeMaterial = new THREE.MeshLambertMaterial({envMap: cubecamera.renderTarget});
+    chromeMaterial = new THREE.ShaderMaterial({
+        uniforms: {
+            "uSampler": {
+                type: "t", value: cubecamera.renderTarget
+            },
+        },
+        vertexShader: readFile("chrome.vert"),
+        fragmentShader: readFile("chrome.frag")
+    });
 
-    glassMaterial = new THREE.MeshLambertMaterial({envMap: refractioncamera.renderTarget, refractionRatio: 0.95});
+
+    glassMaterial = new THREE.MeshLambertMaterial({
+        color: 0x6D9BC3,
+        envMap: refractioncamera.renderTarget,
+        refractionRatio: 0.95
+    });
+
+    glassMaterial = new THREE.ShaderMaterial({
+        uniforms: {
+            "uSampler": {
+                type: "t", value: refractioncamera.renderTarget
+            },
+            "coeff": {
+                type: "1f", value: coeff
+            }
+        },
+        vertexShader: readFile("glass.vert"),
+        fragmentShader: readFile("glass.frag")
+    });
+
 
     Shader_Material = new THREE.ShaderMaterial({
         uniforms: {
@@ -143,11 +175,12 @@ function InitMaterials() {
             }
         },
         vertexShader: readFile("shader.vert"),
-        fragmentShader: readFile("shader.frag"),
+        fragmentShader: readFile("shader.frag")
     });
     Shader_Material.side = THREE.DoubleSide;
 
     TorusMaterial = new THREE.MeshLambertMaterial({color: 0xffff00});
+    TorusMaterial.castShadow = true;
 }
 
 function degToRad(degrees) {
@@ -164,13 +197,14 @@ function LoadDalek() {
     objLoader.setPath('models/DALEK/');
     objLoader.load('dalek.obj', function (object) {
 
-        object.traverse( function(child) {
+        object.traverse(function (child) {
             if (child instanceof THREE.Mesh) {
                 // apply custom material
                 child.material = glassMaterial;
             }
         });
         object.position.x = 30;
+        object.castShadow = true;
         object.position.z = 250;
         scene.add(object);
     });
@@ -186,9 +220,10 @@ function MeshAll() {
 
     Plane_mesh = new THREE.Mesh(Plane, Plane_material);
     Plane_mesh.rotateOnAxis(Vec, -Math.PI / 180.0 * 90);
+    Plane_mesh.resiveShadow = true;
     Plane_mesh.position.y = -100
     Plane_mesh.scale.set(20, 20, 20);
-    //scene.add(Plane_mesh);
+    scene.add(Plane_mesh);
 
     Skybox_mesh = new THREE.Mesh(Skybox, Shader_Material);
     Skybox_mesh.scale.set(200, 200, 200);
@@ -201,6 +236,7 @@ function MeshAll() {
         mesh.position.y = Math.random() * 1000 - 50;
         mesh.position.z = Math.random() * 1000 - 50;
         mesh.scale.x = mesh.scale.y = mesh.scale.z = Math.random() * 3 + 1;
+        mesh.castShadow = true;
         scene.add(mesh);
         toruss.push(mesh);
     }
@@ -277,3 +313,4 @@ function dragNow() {
 function dragEnd() {
     IsDrag = 0;
 }
+
